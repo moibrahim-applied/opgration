@@ -42,6 +42,14 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
+  // Skip auth check entirely for API routes - they handle their own auth
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/');
+
+  if (isApiRoute) {
+    // API routes handle their own authentication (session or API key)
+    return supabaseResponse;
+  }
+
   // IMPORTANT: If you remove getClaims() and you use server-side rendering
   // with the Supabase client, your users may be randomly logged out.
   const { data } = await supabase.auth.getClaims();

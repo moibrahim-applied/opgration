@@ -1,105 +1,180 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Opgration - Integration Hub
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+An integration hub that bridges internal workflow platforms with external services, providing a unified API gateway for seamless integrations.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## 🎯 Project Overview
 
-## Features
+Opgration allows users to:
+- Browse available integrations (Google Drive, Dropbox, Slack, etc.)
+- Authenticate with external services (OAuth2, API keys, etc.)
+- Get unified API endpoints to use in workflow automation tools like Opus
+- Manage integrations across organizations and projects
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+## 🏗️ Architecture
 
-## Demo
+```
+src/
+├── domain/              # Business logic & entities
+│   ├── entities/        # Core domain models
+│   ├── repositories/    # Repository interfaces
+│   └── usecases/        # Business use cases
+├── infrastructure/      # External implementations
+│   ├── database/        # Supabase repositories
+│   ├── services/        # OAuth, encryption, etc.
+│   └── api/             # API routes
+└── presentation/        # UI layer
+    ├── components/      # React components
+    └── hooks/           # Custom React hooks
+```
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+## 🚀 Tech Stack
 
-## Deploy to Vercel
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Architecture**: Clean Architecture
 
-Vercel deployment will guide you through creating a Supabase account and project.
+## 📦 Database Schema
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+### Core Tables:
+- `organizations` - Multi-tenancy support
+- `projects` - Project hierarchy under orgs
+- `integrations` - Integration catalog (admin-managed)
+- `integration_actions` - Available actions per integration
+- `connections` - User's authenticated integrations
+- `encrypted_credentials` - Encrypted auth tokens/keys
+- `api_logs` - API usage monitoring
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+## 🛠️ Getting Started
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+### Prerequisites
+- Node.js 18+
+- Supabase account
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+### Setup
 
-## Clone and run locally
+1. **Create Supabase Project**:
+   - Go to [database.new](https://database.new)
+   - Create a new project
+   - Go to SQL Editor and run `supabase/schema.sql`
+   - Run `supabase/seed.sql` for sample data
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+2. **Configure Environment**:
+   - Rename `.env.example` to `.env.local`
+   - Add your Supabase credentials from [Project Settings > API](https://supabase.com/dashboard/project/_/settings/api)
 
-2. Create a Next.js app using the Supabase Starter template npx command
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+# OAuth credentials (for integrations)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+DROPBOX_CLIENT_ID=
+DROPBOX_CLIENT_SECRET=
+SLACK_CLIENT_ID=
+SLACK_CLIENT_SECRET=
+```
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+3. **Install & Run**:
+```bash
+npm install
+npm run dev
+```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+Open [http://localhost:3000](http://localhost:3000)
 
-3. Use `cd` to change into the app's directory
+## 🔑 Key Features
 
-   ```bash
-   cd with-supabase-app
-   ```
+### 1. Integration Setup Flow
+```
+User Flow:
+1. Browse integrations catalog
+2. Click "Create Connection"
+3. Name the connection
+4. Authenticate (OAuth/API Key/Token)
+5. Get API endpoint details
+```
 
-4. Rename `.env.example` to `.env.local` and update the following:
+### 2. Unified API Gateway
+```
+Endpoint Format:
+POST /api/execute/{org-id}/{project-id}/{connection-id}/{action-slug}
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+Example:
+POST /api/execute/org-123/proj-456/conn-789/create-folder
+Body: { "folderName": "My Folder" }
+```
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+### 3. Admin Panel
+- Create new integrations
+- Define authentication flows
+- Configure actions and endpoints
+- Generic schema for extensibility
 
-5. You can now run the Next.js local development server:
+## 🔐 Security
 
-   ```bash
-   npm run dev
-   ```
+- Row Level Security (RLS) on all tables
+- Encrypted credential storage using pgcrypto
+- OAuth state validation
+- Project-based access control
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+## 📝 API Usage Example
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+From your workflow tool (like Opus):
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+```bash
+curl -X POST https://opgration.com/api/execute/org-abc/proj-xyz/conn-123/create-folder \
+  -H "Content-Type: application/json" \
+  -d '{
+    "folderName": "New Project Files",
+    "parentFolderId": "root"
+  }'
+```
 
-## Feedback and issues
+## 🧩 Adding New Integrations
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+### Via Admin UI (Recommended):
+1. Go to Admin Panel
+2. Click "Add Integration"
+3. Fill in details:
+   - Name, slug, logo
+   - Auth type & configuration
+   - Base API URL
+4. Add actions with endpoint paths and schemas
 
-## More Supabase examples
+### Sample Integration Config:
+```json
+{
+  "name": "GitHub",
+  "authType": "oauth2",
+  "authConfig": {
+    "authorizationUrl": "https://github.com/login/oauth/authorize",
+    "tokenUrl": "https://github.com/login/oauth/access_token",
+    "scopes": ["repo", "user"]
+  },
+  "baseUrl": "https://api.github.com"
+}
+```
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+## 🎯 Development Roadmap
+
+- [x] Database schema
+- [x] Clean architecture setup
+- [x] Domain models
+- [ ] Supabase repositories
+- [ ] OAuth service
+- [ ] Unified API gateway
+- [ ] Admin UI
+- [ ] User dashboard
+- [ ] Integration catalog
+- [ ] Connection management
+- [ ] API documentation
+
+## 📄 License
+
+MIT

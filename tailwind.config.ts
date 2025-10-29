@@ -11,6 +11,24 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Lemon Squeezy Wedges Color System
+        gray: {
+          50: "#F7F7F8",
+          100: "#E8E8ED",
+          500: "#6C6C89",
+          800: "#282833",
+          900: "#121217",
+        },
+        purple: {
+          200: "#fcc5f3",
+          400: "#8D6CEF",
+          500: "#7047EB",
+          600: "#5423E7",
+        },
+        yellow: {
+          500: "#FFC233",
+        },
+        // Keep shadcn compatibility
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -44,18 +62,25 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        chart: {
-          "1": "hsl(var(--chart-1))",
-          "2": "hsl(var(--chart-2))",
-          "3": "hsl(var(--chart-3))",
-          "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))",
-        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      animation: {
+        "fade-in": "fadeIn 0.5s ease-in-out",
+        "fade-out": "fadeOut 0.5s ease-in-out",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        fadeOut: {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
       },
     },
   },

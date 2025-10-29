@@ -1,0 +1,32 @@
+{
+    "template": {
+      "id": YOUR_TEMPLATE_ID,
+      "data": {
+        "recipient_name": "John Doe",
+        "recipient_email": "john.doe@example.com",
+        "invoice_number": "INV-000123",
+        "date": "2025-10-29",
+        "items": [
+          {
+            "description": "Software licence",
+            "quantity": 1,
+            "unit_price": 499.00
+          },
+          {
+            "description": "Maintenance/Support (12 mo)",
+            "quantity": 1,
+            "unit_price": 99.00
+          }
+        ],
+        "total_amount": 598.00,
+        "company_name": "Your Company LLC",
+        "company_address": "1234 Example Road, Dubai, UAE",
+        "notes": "Thank you for your business!"
+      }
+    },
+    "output": {
+      "file_name": "invoice_INV-000123.pdf",
+      "format": "pdf"
+    }
+  }
+  
