@@ -331,7 +331,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               </Button>
               <Button
                 onClick={() => {
-                  onComplete();
+                  // Don't mark onboarding complete - video tutorial will do that
+                  onSkip();
                   // Use window.location for full page reload to refresh sidebar
                   window.location.href = `/w/${workspaceSlug}/integrations`;
                 }}
@@ -361,7 +362,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             <div className="flex gap-3 justify-center pt-4">
               <Button
                 onClick={() => {
-                  onComplete();
+                  // Don't mark onboarding complete - video tutorial will do that
+                  onSkip();
                   // Use window.location for full page reload to refresh sidebar
                   window.location.href = `/w/${workspaceSlug}/integrations`;
                 }}

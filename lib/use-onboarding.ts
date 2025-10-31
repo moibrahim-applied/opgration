@@ -34,13 +34,10 @@ export function useOnboarding() {
     }
   };
 
-  const skipOnboarding = async () => {
-    try {
-      await fetch('/api/user/onboarding', { method: 'POST' });
-      setShowOnboarding(false);
-    } catch (error) {
-      console.error('Failed to skip onboarding:', error);
-    }
+  const skipOnboarding = () => {
+    // Just hide the wizard without marking onboarding complete
+    // The video tutorial dialog will mark it complete later
+    setShowOnboarding(false);
   };
 
   return {

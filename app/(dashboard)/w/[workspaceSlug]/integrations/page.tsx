@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import { IntegrationTutorialDialog } from '@/components/integration-tutorial-dialog';
 
 interface Integration {
   id: string;
@@ -75,7 +76,9 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background"> 
+      {/* Tutorial Dialog for New Users */}
+      <IntegrationTutorialDialog loomVideoUrl="https://www.loom.com/embed/f5256aea26444660bd1a7e133d3a7430" />
       {/* Hero Section */}
       <div className="border-b bg-card relative overflow-hidden">
         {/* Gradient Orb Background */}

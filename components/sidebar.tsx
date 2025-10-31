@@ -139,12 +139,6 @@ export function Sidebar({ user }: SidebarProps) {
       badge: null,
     },
     {
-      name: 'Triggers',
-      href: `/w/${currentWorkspaceSlug}/triggers`,
-      icon: Zap,
-      badge: null,
-    },
-    {
       name: 'Credentials',
       href: `/w/${currentWorkspaceSlug}/credentials`,
       icon: Key,
