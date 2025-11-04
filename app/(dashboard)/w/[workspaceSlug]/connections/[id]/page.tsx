@@ -131,14 +131,18 @@ export default function ConnectionDetailPage() {
       // Use provided parameters or fall back to state
       const params = parameters || actionParameters[actionSlug] || {};
 
-      const res = await fetch(`/api/execute/${connection.id}/${actionSlug}`, {
+      const res = await fetch('/api/v2/execute', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Workspace-ID': connection.organizationId,
-          'X-Project-ID': connection.projectId,
         },
-        body: JSON.stringify(params),
+        body: JSON.stringify({
+          workspace_id: connection.organizationId,
+          project_id: connection.projectId,
+          connection_id: connection.id,
+          action: actionSlug,
+          parameters: params,
+        }),
       });
 
       const data = await res.json();

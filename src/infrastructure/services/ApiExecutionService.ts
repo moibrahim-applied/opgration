@@ -20,6 +20,12 @@ export class ApiExecutionService {
    */
   async execute(input: ExecuteActionInput): Promise<ExecuteActionResult> {
     try {
+      // Special handling for Gmail send-email (avoid self-referential HTTP call)
+      if (input.action.slug === 'send-email' && input.baseUrl.includes('gmail.googleapis.com')) {
+        console.log('🔵 Handling Gmail send-email inline');
+        return this.handleGmailSendEmail(input);
+      }
+
       const { url, headers, body, isMultipart } = this.prepareRequest(input);
 
       console.log('Prepared request:', {
@@ -272,5 +278,86 @@ export class ApiExecutionService {
     }
 
     return await response.text();
+  }
+
+  /**
+   * Handle Gmail send-email action inline (avoid self-referential HTTP call)
+   */
+  private async handleGmailSendEmail(input: ExecuteActionInput): Promise<ExecuteActionResult> {
+    try {
+      const { to, subject, body, isHtml = false, cc, bcc, fromName } = input.payload;
+
+      // Validate required fields
+      if (!to || !subject || !body) {
+        return {
+          success: false,
+          statusCode: 400,
+          error: 'Missing required fields: to, subject, body'
+        };
+      }
+
+      // Construct RFC 2822 email
+      const headers: string[] = [];
+      headers.push(`To: ${to}`);
+      if (fromName) headers.push(`From: ${fromName}`);
+      if (cc) headers.push(`Cc: ${cc}`);
+      if (bcc) headers.push(`Bcc: ${bcc}`);
+      headers.push(`Subject: ${subject}`);
+      headers.push(`Content-Type: ${isHtml ? 'text/html' : 'text/plain'}; charset=utf-8`);
+      headers.push('MIME-Version: 1.0');
+
+      const rfc2822Email = headers.join('\r\n') + '\r\n\r\n' + body;
+
+      // Base64url encode
+      const base64 = Buffer.from(rfc2822Email, 'utf-8').toString('base64');
+      const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+      console.log('🔵 Sending to Gmail API...');
+
+      // Send to Gmail API
+      const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${input.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ raw: base64url }),
+      });
+
+      console.log('🔵 Gmail API response status:', response.status);
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error('🔴 Gmail API error:', responseData);
+        return {
+          success: false,
+          statusCode: response.status,
+          error: responseData.error?.message || 'Failed to send email',
+          data: responseData
+        };
+      }
+
+      console.log('🔵 Gmail API success! Message ID:', responseData.id);
+
+      return {
+        success: true,
+        statusCode: 200,
+        data: {
+          success: true,
+          messageId: responseData.id,
+          threadId: responseData.threadId,
+          labelIds: responseData.labelIds
+        }
+      };
+
+    } catch (error) {
+      console.error('🔴 Gmail send error:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        error: error instanceof Error ? error.message : 'Failed to send email'
+      };
+    }
   }
 }

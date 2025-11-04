@@ -91,14 +91,17 @@ function constructEmail(params: {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('🔵 Gmail endpoint hit!');
   try {
     // Parse request body
     let body;
     try {
       const text = await request.text();
-      console.log('Gmail send email - Received request');
+      console.log('Gmail send email - Received request, body length:', text.length);
       body = JSON.parse(text);
+      console.log('Gmail send email - Parsed body:', { to: body.to, subject: body.subject });
     } catch (e) {
+      console.error('Gmail send email - JSON parse error:', e);
       return NextResponse.json(
         { error: 'Invalid JSON in request body' },
         { status: 400 }
@@ -188,6 +191,7 @@ export async function POST(request: NextRequest) {
     // Send to Gmail API
     const gmailUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send';
 
+    console.log('🔵 Sending to Gmail API...');
     const response = await fetch(gmailUrl, {
       method: 'POST',
       headers: {
@@ -198,6 +202,8 @@ export async function POST(request: NextRequest) {
         raw: encodedEmail
       }),
     });
+
+    console.log('🔵 Gmail API response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -212,6 +218,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
+    console.log('🔵 Gmail API success! Message ID:', data.id);
 
     return NextResponse.json({
       success: true,
@@ -221,10 +228,12 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Gmail send email error:', error);
+    console.error('🔴 Gmail send email error:', error);
+    console.error('🔴 Error stack:', error instanceof Error ? error.stack : 'N/A');
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : 'Failed to send email'
+        error: error instanceof Error ? error.message : 'Failed to send email',
+        stack: error instanceof Error ? error.stack : undefined
       },
       { status: 500 }
     );
