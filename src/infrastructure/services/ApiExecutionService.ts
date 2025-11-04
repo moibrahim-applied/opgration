@@ -285,7 +285,7 @@ export class ApiExecutionService {
    */
   private async handleGmailSendEmail(input: ExecuteActionInput): Promise<ExecuteActionResult> {
     try {
-      const { to, subject, body, isHtml = false, cc, bcc, fromName } = input.payload;
+      const { to, subject, body, isHtml = false, cc, bcc, fromName, attachments = [] } = input.payload;
 
       // Validate required fields
       if (!to || !subject || !body) {
@@ -296,19 +296,72 @@ export class ApiExecutionService {
         };
       }
 
-      // Construct RFC 2822 email
-      const headers: string[] = [];
-      headers.push(`To: ${to}`);
-      if (fromName) headers.push(`From: ${fromName}`);
-      if (cc) headers.push(`Cc: ${cc}`);
-      if (bcc) headers.push(`Bcc: ${bcc}`);
-      headers.push(`Subject: ${subject}`);
-      headers.push(`Content-Type: ${isHtml ? 'text/html' : 'text/plain'}; charset=utf-8`);
-      headers.push('MIME-Version: 1.0');
+      let rfc2822Email: string;
 
-      const rfc2822Email = headers.join('\r\n') + '\r\n\r\n' + body;
+      // Check if we have attachments - use multipart MIME
+      if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+        console.log('📎 Building multipart email with', attachments.length, 'attachment(s)');
 
-      // Base64url encode
+        const boundary = '----=_Part_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+
+        // Build email headers
+        const headers: string[] = [];
+        headers.push(`To: ${to}`);
+        if (fromName) headers.push(`From: ${fromName}`);
+        if (cc) headers.push(`Cc: ${cc}`);
+        if (bcc) headers.push(`Bcc: ${bcc}`);
+        headers.push(`Subject: ${subject}`);
+        headers.push('MIME-Version: 1.0');
+        headers.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+
+        // Start building the email body
+        let emailBody = headers.join('\r\n') + '\r\n\r\n';
+
+        // Add the text/html body part
+        emailBody += `--${boundary}\r\n`;
+        emailBody += `Content-Type: ${isHtml ? 'text/html' : 'text/plain'}; charset=utf-8\r\n`;
+        emailBody += '\r\n';
+        emailBody += body;
+        emailBody += '\r\n\r\n';
+
+        // Add each attachment
+        for (const attachment of attachments) {
+          if (!attachment.filename || !attachment.content || !attachment.mimeType) {
+            console.warn('⚠️ Skipping invalid attachment:', attachment);
+            continue;
+          }
+
+          emailBody += `--${boundary}\r\n`;
+          emailBody += `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"\r\n`;
+          emailBody += `Content-Disposition: attachment; filename="${attachment.filename}"\r\n`;
+          emailBody += 'Content-Transfer-Encoding: base64\r\n';
+          emailBody += '\r\n';
+
+          // Ensure the content is properly base64 encoded (remove whitespace)
+          const cleanBase64 = attachment.content.replace(/\s/g, '');
+          emailBody += cleanBase64;
+          emailBody += '\r\n\r\n';
+        }
+
+        // Close the multipart email
+        emailBody += `--${boundary}--`;
+
+        rfc2822Email = emailBody;
+      } else {
+        // Simple email without attachments
+        const headers: string[] = [];
+        headers.push(`To: ${to}`);
+        if (fromName) headers.push(`From: ${fromName}`);
+        if (cc) headers.push(`Cc: ${cc}`);
+        if (bcc) headers.push(`Bcc: ${bcc}`);
+        headers.push(`Subject: ${subject}`);
+        headers.push(`Content-Type: ${isHtml ? 'text/html' : 'text/plain'}; charset=utf-8`);
+        headers.push('MIME-Version: 1.0');
+
+        rfc2822Email = headers.join('\r\n') + '\r\n\r\n' + body;
+      }
+
+      // Base64url encode the entire email
       const base64 = Buffer.from(rfc2822Email, 'utf-8').toString('base64');
       const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
