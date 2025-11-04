@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,26 +48,45 @@ export function Sidebar({ user }: SidebarProps) {
   const [currentProjectId, setCurrentProjectId] = useState<string>('');
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const lastWorkspaceSlugRef = useRef<string>('');
 
   useEffect(() => {
-    // Only initialize once, not on every pathname change
+    // Initialize only once
     if (!initialized) {
       initializeSidebar();
-    } else {
-      // Just update workspace slug from URL on navigation
-      const match = pathname?.match(/^\/w\/([^\/]+)/);
-      if (match && match[1] !== currentWorkspaceSlug) {
-        setCurrentWorkspaceSlug(match[1]);
-        // Fetch projects for new workspace
-        const newWorkspace = workspaces.find(w => w.slug === match[1]);
-        if (newWorkspace) {
-          fetchProjectsForWorkspace(newWorkspace.id);
-        }
+    }
+  }, [initialized]);
+
+  // Separate effect to handle workspace changes ONLY
+  useEffect(() => {
+    if (!initialized || workspaces.length === 0) return;
+
+    const match = pathname?.match(/^\/w\/([^\/]+)/);
+    const urlWorkspaceSlug = match?.[1];
+
+    console.log('Sidebar Effect:', {
+      urlWorkspaceSlug,
+      lastWorkspace: lastWorkspaceSlugRef.current,
+      needsUpdate: urlWorkspaceSlug !== lastWorkspaceSlugRef.current
+    });
+
+    // Only update if workspace actually changed
+    if (urlWorkspaceSlug && urlWorkspaceSlug !== lastWorkspaceSlugRef.current) {
+      console.log('Workspace changed! Fetching projects...');
+      lastWorkspaceSlugRef.current = urlWorkspaceSlug;
+      setCurrentWorkspaceSlug(urlWorkspaceSlug);
+
+      const newWorkspace = workspaces.find(w => w.slug === urlWorkspaceSlug);
+      if (newWorkspace) {
+        fetchProjectsForWorkspace(newWorkspace.id);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, initialized]);
 
   const fetchProjectsForWorkspace = async (workspaceId: string) => {
+    setLoadingProjects(true);
     try {
       const projectsRes = await fetch(`/api/workspaces/${workspaceId}/projects`);
       const projectsData = await projectsRes.json();
@@ -85,6 +104,8 @@ export function Sidebar({ user }: SidebarProps) {
       }
     } catch (error) {
       console.error('Failed to fetch projects:', error);
+    } finally {
+      setLoadingProjects(false);
     }
   };
 
@@ -93,6 +114,7 @@ export function Sidebar({ user }: SidebarProps) {
       // Extract workspace slug from URL
       const match = pathname?.match(/^\/w\/([^\/]+)/);
       if (match) {
+        lastWorkspaceSlugRef.current = match[1];
         setCurrentWorkspaceSlug(match[1]);
       }
 
