@@ -281,19 +281,38 @@ export function InteractiveApiBuilder({
     // Handle arrays and objects with textarea (fallback)
     if (prop.type === 'array' || prop.type === 'object') {
       return (
-        <Textarea
-          value={typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
-          onChange={(e) => {
-            try {
-              const parsed = JSON.parse(e.target.value);
-              updateParameter(key, parsed);
-            } catch {
-              updateParameter(key, e.target.value);
+        <div className="space-y-2">
+          <Textarea
+            value={typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+
+              // Try to auto-fix common JSON issues
+              let fixedValue = inputValue.trim()
+                // Remove trailing commas before closing brackets/braces
+                .replace(/,(\s*[\]}])/g, '$1');
+
+              try {
+                const parsed = JSON.parse(fixedValue);
+                updateParameter(key, parsed);
+              } catch {
+                // If parsing fails, keep as string - backend will try to parse it
+                updateParameter(key, inputValue);
+              }
+            }}
+            placeholder={
+              prop.type === 'array'
+                ? prop.default
+                  ? JSON.stringify(prop.default, null, 2)
+                  : '[["value1", "value2"]]'
+                : '{"key": "value"}'
             }
-          }}
-          placeholder={prop.type === 'array' ? '["value1", "value2"]' : '{"key": "value"}'}
-          className="font-mono text-sm min-h-[100px]"
-        />
+            className="font-mono text-sm min-h-[100px]"
+          />
+          <p className="text-xs text-muted-foreground">
+            💡 Enter as JSON. Example: {prop.default ? JSON.stringify(prop.default) : prop.type === 'array' ? '[["row1col1", "row1col2"], ["row2col1", "row2col2"]]' : '{"key": "value"}'}
+          </p>
+        </div>
       );
     }
 

@@ -296,6 +296,7 @@ async function executeAction(
     await supabase.from('api_logs').insert({
       connection_id: connectionId,
       action_id: action.id,
+      user_id: userId,
       request_payload: body,
       response_payload: result,
       status_code: 200,
@@ -309,9 +310,18 @@ async function executeAction(
     try {
       const { connectionId } = await params;
       const supabase = createServiceClient();
+
+      // Try to get userId from context, but don't fail if not available
+      let errorUserId = null;
+      try {
+        // Attempt to extract userId from earlier in the flow
+        // This is best-effort error logging
+      } catch {}
+
       await supabase.from('api_logs').insert({
         connection_id: connectionId,
         action_id: null,
+        user_id: errorUserId,
         request_payload: {},
         response_payload: { error: error instanceof Error ? error.message : 'Unknown error' },
         status_code: 500,

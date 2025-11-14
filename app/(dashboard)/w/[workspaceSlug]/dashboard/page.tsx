@@ -71,7 +71,7 @@ export default async function WorkspaceDashboardPage({
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-3">
-                Welcome back! 👋
+                Welcome lara! 👋
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl">
                 {workspace.name} workspace • Manage your integrations, connections, and API keys all in one place.

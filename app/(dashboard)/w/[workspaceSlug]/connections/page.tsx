@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link2, Plus, ExternalLink, Trash2, RefreshCw, Building2, FolderKanban, AlertCircle } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Connection {
   id: string;
@@ -27,21 +34,78 @@ interface Connection {
   createdAt: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export default function ConnectionsPage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const workspaceSlug = params?.workspaceSlug as string;
 
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    fetchConnections();
-  }, []);
+    if (workspaceSlug) {
+      fetchWorkspaceAndProjects();
+    }
+  }, [workspaceSlug]);
+
+  useEffect(() => {
+    // Get projectId from URL params
+    const projectIdParam = searchParams.get('projectId');
+    if (projectIdParam) {
+      setSelectedProjectId(projectIdParam);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (workspaceSlug && workspace) {
+      fetchConnections();
+    }
+  }, [workspaceSlug, selectedProjectId, workspace]);
+
+  const fetchWorkspaceAndProjects = async () => {
+    try {
+      // Fetch workspace
+      const wsRes = await fetch('/api/workspaces');
+      const wsData = await wsRes.json();
+      const ws = wsData.workspaces?.find((w: Workspace) => w.slug === workspaceSlug);
+      setWorkspace(ws || null);
+
+      if (ws) {
+        // Fetch projects
+        const projectsRes = await fetch(`/api/workspaces/${ws.id}/projects`);
+        const projectsData = await projectsRes.json();
+        setProjects(projectsData.projects || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch workspace and projects:', error);
+    }
+  };
 
   const fetchConnections = async () => {
     try {
-      const res = await fetch('/api/connections');
+      let url = `/api/connections?workspaceSlug=${workspaceSlug}`;
+      if (selectedProjectId && selectedProjectId !== 'all') {
+        url += `&projectId=${selectedProjectId}`;
+      }
+
+      const res = await fetch(url);
       const data = await res.json();
       setConnections(data.connections || []);
     } catch (error) {
@@ -49,6 +113,19 @@ export default function ConnectionsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+
+    // Update URL params
+    const params = new URLSearchParams(searchParams.toString());
+    if (projectId === 'all') {
+      params.delete('projectId');
+    } else {
+      params.set('projectId', projectId);
+    }
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const handleDeleteAll = async () => {
@@ -98,7 +175,7 @@ export default function ConnectionsPage() {
       {/* Header */}
       <div className="border-b bg-card">
         <div className="px-8 py-8 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Link2 className="w-5 h-5 text-primary" />
@@ -107,6 +184,31 @@ export default function ConnectionsPage() {
                 <h1 className="text-3xl font-bold text-foreground">Connections</h1>
                 <p className="text-muted-foreground mt-1">Manage your connected integrations</p>
               </div>
+            </div>
+          </div>
+
+          {/* Project Filter & Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FolderKanban className="w-4 h-4 text-muted-foreground" />
+              <Select value={selectedProjectId} onValueChange={handleProjectChange}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedProjectId !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  {projects.find(p => p.id === selectedProjectId)?.name}
+                </Badge>
+              )}
             </div>
             <div className="flex gap-2">
               {connections.length > 0 && (

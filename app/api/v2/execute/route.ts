@@ -518,7 +518,40 @@ export async function POST(request: NextRequest) {
     }
 
     // Normalize parameter keys to camelCase (spreadsheetid → spreadsheetId)
-    const normalizedParameters = normalizeKeys(parameters);
+    let normalizedParameters = normalizeKeys(parameters);
+
+    // Parse stringified JSON values based on action schema
+    // If the schema says a parameter should be an array/object but we received a string, parse it
+    if (action.requestSchema && action.requestSchema.properties) {
+      const parsedParams: Record<string, any> = {};
+
+      for (const [key, value] of Object.entries(normalizedParameters)) {
+        const schemaProperty = (action.requestSchema.properties as any)[key];
+
+        // If the schema says this should be an array or object, but we got a string, try to parse it
+        if (schemaProperty && (schemaProperty.type === 'array' || schemaProperty.type === 'object')) {
+          if (typeof value === 'string') {
+            try {
+              // Try to parse the JSON string
+              parsedParams[key] = JSON.parse(value);
+              console.log(`Parsed ${key} from string to ${schemaProperty.type}`);
+            } catch (error) {
+              console.error(`Failed to parse ${key} as JSON:`, error);
+              // Keep the original value if parsing fails
+              parsedParams[key] = value;
+            }
+          } else {
+            // Already the correct type
+            parsedParams[key] = value;
+          }
+        } else {
+          // Not an array/object type, keep as is
+          parsedParams[key] = value;
+        }
+      }
+
+      normalizedParameters = parsedParams;
+    }
 
     console.log('Executing action with:', {
       actionName: action.name,
@@ -542,6 +575,7 @@ export async function POST(request: NextRequest) {
     await supabase.from('api_logs').insert({
       connection_id: connection_id,
       action_id: action.id,
+      user_id: userId,
       request_payload: normalizedParameters,
       response_payload: result,
       status_code: 200,

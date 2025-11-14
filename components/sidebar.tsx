@@ -18,6 +18,7 @@ import {
   Building2,
   Plus,
   FolderKanban,
+  Activity,
 } from 'lucide-react';
 
 interface Workspace {
@@ -158,6 +159,12 @@ export function Sidebar({ user }: SidebarProps) {
       name: 'Connections',
       href: `/w/${currentWorkspaceSlug}/connections`,
       icon: Link2,
+      badge: null,
+    },
+    {
+      name: 'Executions',
+      href: `/w/${currentWorkspaceSlug}/executions`,
+      icon: Activity,
       badge: null,
     },
     {

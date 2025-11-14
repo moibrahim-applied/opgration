@@ -8,6 +8,10 @@ export async function GET(
   try {
     const { id: integrationId } = await params;
     const supabase = await createClient();
+    const { searchParams } = new URL(request.url);
+    const workspaceSlug = searchParams.get('workspaceSlug');
+    const organizationId = searchParams.get('organizationId');
+    const projectId = searchParams.get('projectId');
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -15,8 +19,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get all active connections for this integration
-    const { data: connections, error } = await supabase
+    // Build query
+    let query = supabase
       .from('connections')
       .select(`
         id,
@@ -30,8 +34,33 @@ export async function GET(
       `)
       .eq('integration_id', integrationId)
       .eq('user_id', user.id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+      .eq('is_active', true);
+
+    // Filter by organization - support both slug and ID
+    if (workspaceSlug) {
+      // Get organization by slug
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', workspaceSlug)
+        .single();
+
+      if (orgError || !org) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+
+      query = query.eq('organization_id', org.id);
+    } else if (organizationId) {
+      query = query.eq('organization_id', organizationId);
+    }
+
+    // Filter by project if provided
+    if (projectId) {
+      query = query.eq('project_id', projectId);
+    }
+
+    // Get all active connections for this integration
+    const { data: connections, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching connections:', error);

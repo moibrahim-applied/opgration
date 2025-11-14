@@ -1,0 +1,7 @@
+loan_number,creditor,account_type,balance,payment,property_linked,omitted,months_remaining
+12345678,Newrez SMS Caliber,Mortgage,280000,2100,123 Main St,No,
+12345678,Chase Card,Revolving,5000,150,,No,
+22345678,Wells Fargo,Mortgage,200000,1500,456 Oak Ave,No,
+22345678,Student Loan,Installment,15000,0,,No,
+32345678,Navy Federal,Mortgage,350000,2500,789 Pine St,No,
+32345678,USAA Card,Revolving,3000,100,,No,

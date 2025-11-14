@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, Plus, Trash2, RefreshCw, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Key, Plus, Trash2, RefreshCw, CheckCircle, AlertCircle, ExternalLink, FolderKanban } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Credential {
   id: string;
@@ -22,21 +29,74 @@ interface Credential {
   lastUsedAt?: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export default function CredentialsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const workspaceSlug = params?.workspaceSlug as string;
 
   const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCredentials();
-  }, []);
+    if (workspaceSlug) {
+      fetchWorkspaceAndProjects();
+    }
+  }, [workspaceSlug]);
+
+  useEffect(() => {
+    const projectIdParam = searchParams.get('projectId');
+    if (projectIdParam) {
+      setSelectedProjectId(projectIdParam);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (workspaceSlug && workspace) {
+      fetchCredentials();
+    }
+  }, [workspaceSlug, selectedProjectId, workspace]);
+
+  const fetchWorkspaceAndProjects = async () => {
+    try {
+      const wsRes = await fetch('/api/workspaces');
+      const wsData = await wsRes.json();
+      const ws = wsData.workspaces?.find((w: Workspace) => w.slug === workspaceSlug);
+      setWorkspace(ws || null);
+
+      if (ws) {
+        const projectsRes = await fetch(`/api/workspaces/${ws.id}/projects`);
+        const projectsData = await projectsRes.json();
+        setProjects(projectsData.projects || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch workspace and projects:', error);
+    }
+  };
 
   const fetchCredentials = async () => {
     try {
-      const res = await fetch('/api/connections');
+      let url = `/api/connections?workspaceSlug=${workspaceSlug}`;
+      if (selectedProjectId && selectedProjectId !== 'all') {
+        url += `&projectId=${selectedProjectId}`;
+      }
+
+      const res = await fetch(url);
       const data = await res.json();
 
       const transformedCredentials = (data.connections || []).map((conn: any) => ({
@@ -81,6 +141,18 @@ export default function CredentialsPage() {
     router.push(`/w/${workspaceSlug}/integrations/${credential.integration.slug}`);
   };
 
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (projectId === 'all') {
+      params.delete('projectId');
+    } else {
+      params.set('projectId', projectId);
+    }
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
   const groupedCredentials = credentials.reduce((acc, cred) => {
     const serviceName = cred.integration.name;
     if (!acc[serviceName]) {
@@ -106,7 +178,7 @@ export default function CredentialsPage() {
       {/* Header */}
       <div className="border-b bg-card">
         <div className="px-8 py-8 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Key className="w-5 h-5 text-primary" />
@@ -115,6 +187,31 @@ export default function CredentialsPage() {
                 <h1 className="text-3xl font-bold text-foreground">Credentials</h1>
                 <p className="text-muted-foreground mt-1">Manage your service authentication credentials</p>
               </div>
+            </div>
+          </div>
+
+          {/* Project Filter & Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FolderKanban className="w-4 h-4 text-muted-foreground" />
+              <Select value={selectedProjectId} onValueChange={handleProjectChange}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedProjectId !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  {projects.find(p => p.id === selectedProjectId)?.name}
+                </Badge>
+              )}
             </div>
             <Button onClick={() => router.push(`/w/${workspaceSlug}/integrations`)} className="gap-2">
               <Plus className="w-4 h-4" />

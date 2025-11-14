@@ -1,0 +1,6 @@
+loan_number,borrower_type,name,ssn_last4,current_address,months_current,former_address_1,months_former_1,marital_status
+12345678,Primary,Adam Smith,1234,123 Main St,6,456 Old St,24,Married
+12345678,CoBorrower,Megan Smith,5678,123 Main St,6,456 Old St,24,Married
+22345678,Primary,John Doe,5678,456 Oak Ave,30,,,Single
+32345678,Primary,Mike Johnson,9012,789 Pine St,12,100 Previous Ave,18,Married
+32345678,CoBorrower,Sarah Johnson,3456,789 Pine St,12,100 Previous Ave,18,Married

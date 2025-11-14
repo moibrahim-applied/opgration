@@ -1,0 +1,6 @@
+loan_number,asset_type,institution,account_number,account_balance,property_address,property_value,annual_taxes,annual_insurance,months_bank_statement
+44445678,Checking,CoastHills,xxx446,25579,,,,,2
+44445678,Savings,CoastHills,xxx447,51662,,,,,2
+44445678,Retirement,CoastHills,xxx448,25733,,,,,
+44445678,Investment,CoastHills,xxx449,25626,,,,,
+44445678,Property,,,,"4594 Flatley Ford New Demarcusport CT-03658",340000,4200,1278,
